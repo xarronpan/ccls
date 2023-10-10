@@ -351,6 +351,14 @@ int computeGuessScore(std::string_view a, std::string_view b) {
 
 } // namespace
 
+bool hasEnding (std::string const &fullString, std::string const &ending) {
+  if (fullString.length() >= ending.length()) {
+    return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
+  } else {
+    return false;
+  }
+}
+
 void Project::loadDirectory(const std::string &root, Project::Folder &folder) {
   SmallString<256> cdbDir, path, stdinPath;
   std::string err_msg;
@@ -428,6 +436,13 @@ void Project::loadDirectory(const std::string &root, Project::Folder &folder) {
   } else {
     LOG_S(INFO) << "loaded " << path.c_str();
     for (tooling::CompileCommand &cmd : cdb->getAllCompileCommands()) {
+      LOG_S(INFO) << "filename " << cmd.Filename.c_str();
+      if (hasEnding(cmd.Filename, ".h") || hasEnding(cmd.Filename, ".hpp") ||
+          hasEnding(cmd.Filename, ".hh") || hasEnding(cmd.Filename, ".inc")) {
+        LOG_S(INFO) << "ignore " << cmd.Filename.c_str();
+        continue;
+      }
+
       Project::Entry entry;
       entry.root = root;
       doPathMapping(entry.root);
@@ -441,6 +456,7 @@ void Project::loadDirectory(const std::string &root, Project::Folder &folder) {
       doPathMapping(entry.directory);
       entry.filename =
           realPath(resolveIfRelative(entry.directory, cmd.Filename));
+
       normalizeFolder(entry.filename);
       doPathMapping(entry.filename);
 
